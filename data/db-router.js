@@ -16,4 +16,31 @@ router.get("/", (req, res) => {
     });
 });
 
+router.post("/", (req, res) => {
+  const postBody = req.body;
+
+  Db.insert(postBody)
+    .then(post => {
+      res.status(201).json(post);
+    })
+    .catch(err => {
+      res.status(500).json({
+        err: "There was an error while saving the post to the database."
+      });
+    });
+});
+
+router.get("/:id", (req, res) => {
+  const postId = req.params.id;
+  Db.findById(postId)
+    .then(post => {
+      res.status(200).json(post);
+    })
+    .catch(err => {
+      res.status(500).json({
+        err: `The post with the specified id ${id} cannot be retrieved.`
+      });
+    });
+});
+
 module.exports = router;
