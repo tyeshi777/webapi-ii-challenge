@@ -1,4 +1,5 @@
 const express = require("express");
+const Joi = require("joi");
 
 const Db = require("./db.js");
 
@@ -17,11 +18,14 @@ router.get("/", (req, res) => {
 });
 
 router.post("/", (req, res) => {
-  const postBody = req.body;
-  if (!req.body.title && req.body.contents) {
-    res
-      .status(400)
-      .json({ errorMessage: "Please provide title and contents for the post" });
+  const schema = {
+    title: Joi.string().required(),
+    contents: Joi.string().required()
+  };
+  const postBody = Joi.validate(req.body, schema);
+  if (postBody.error) {
+    res.status(400).json(postBody.error.message);
+    return;
   }
   Db.insert(postBody)
     .then(post => {
@@ -35,7 +39,14 @@ router.post("/", (req, res) => {
 });
 
 router.delete("/:id", (req, res) => {
+  // const post = posts.find(post => post.id === parseInt(req.params.id));
   const postId = req.params.id;
+  if (!postId) {
+    res
+      .status(404)
+      .json({ errorMessage: "The post with specified id does not exist" });
+    return;
+  }
   Db.remove(postId)
     .then(deleted => {
       res.status(204).end();
@@ -57,6 +68,7 @@ router.put("/:id", (req, res) => {
       res.status(500).json({ err: "The post information cannot be modified" });
     });
 });
+
 router.get("/:id", (req, res) => {
   const postId = req.params.id;
   Db.findById(postId)
