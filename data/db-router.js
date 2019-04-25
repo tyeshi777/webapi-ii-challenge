@@ -8,7 +8,10 @@ const router = express.Router();
 router.get("/", (req, res) => {
   Db.find()
     .then(post => {
-      res.status(201).json(post);
+      res.status(201).json({
+        messageOfTheDay: process.env.MOTD,
+        post
+      });
     })
     .catch(err => {
       res
@@ -23,11 +26,10 @@ router.post("/", (req, res) => {
     contents: Joi.string().required()
   };
   const postBody = Joi.validate(req.body, schema);
-  if (postBody.error) {
-    res.status(400).json(postBody.error.message);
-    return;
-  }
-  Db.insert(postBody)
+  console.log("post body", postBody);
+  if (postBody.error) return res.status(400).json(postBody.error.message);
+
+  Db.insert(postBody.value)
     .then(post => {
       res.status(201).json(post);
     })
@@ -40,13 +42,12 @@ router.post("/", (req, res) => {
 
 router.delete("/:id", (req, res) => {
   // const post = posts.find(post => post.id === parseInt(req.params.id));
-  const postId = req.params.id;
-  if (!postId) {
-    res
+  const postId = parseInt(req.params.id);
+  if (!postId)
+    return res
       .status(404)
       .json({ errorMessage: "The post with specified id does not exist" });
-    return;
-  }
+
   Db.remove(postId)
     .then(deleted => {
       res.status(204).end();
